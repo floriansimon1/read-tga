@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <style>
+        * {
+            margin:  0;
+            padding: 0;
+        }
+
+        canvas {
+            height: 500px;
+            width:  500px;
+        }
+        </style>
+    </head>
+    <body>
+        <canvas width="500" height="500">
+        </canvas>
+        <script type="text/javascript">
+            module = {};
+        </script>
+        <script type="text/javascript" src="../index.js"></script>
+        <script type="text/javascript">
+            const readTga = module.exports;
+
+            "use strict";
+
+            const width  = 500;
+            const height = 500;
+
+            const putPixel = (image, x, y, { r, g, b }) => {
+                const pixelIndex = 4 * ((height - y) * width + x);
+
+                image.data[pixelIndex]     = r;
+                image.data[pixelIndex + 1] = g;
+                image.data[pixelIndex + 2] = b;
+            };
+
+            const canvasElement = document.querySelector("canvas");
+
+            let context = canvasElement.getContext('2d');
+
+            context.imageSmoothingEnabled = false;
+
+            let image = context.createImageData(width, height);
+
+            for (let it = 0; it < width * height * 4; it += 4) {
+                image.data[it + 3] = 255;
+            }
+
+            fetch("texture.tga")
+            .then(response => response.arrayBuffer())
+            .then(readTga)
+            .then(tga => {
+                console.log(tga);
+
+                const ratio = tga.dimensions.width / width;
+
+                for (let x = 0; x < width; x++) {
+                    for (let y = 0; y < height; y++) {
+                        const sx = Math.round(x * ratio);
+                        const sy = Math.round(y * ratio);
+
+                        putPixel(image, x, y, tga.getPixel(sx, sy));
+                    }
+                }
+
+                context.putImageData(image, 0, 0);
+            })
+            .catch(console.log.bind(console));
+        </script>
+    </body>
+</html>
